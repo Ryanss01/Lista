@@ -1,17 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 typedef struct No {
     int dado;
     struct No *anterior;
     struct No *proximo;
 } No;
 
+
 typedef struct Lista {
     No *inicio;
     No *fim;
 } Lista;
 
+//Protótipos das funções.
 void inicializar(Lista *lista);
 void inserirInicio(Lista *lista, int valor);
 void inserirFinal(Lista *lista, int valor);
@@ -24,6 +27,242 @@ void imprimirDireto(Lista *lista);
 void imprimirInverso(Lista *lista);
 int contarElementos(Lista *lista);
 void liberarLista(Lista *lista);
+
+
+//COMPLEXIDADE: O(1), pois apenas altera dois ponteiros.
+void inicializar(Lista *lista) {
+    lista->inicio = NULL;
+    lista->fim = NULL;
+}
+
+
+//COMPLEXIDADE: O(1), pois não percorre a lista.
+void inserirInicio(Lista *lista, int valor) {
+    //Reserva memória para um novo nó.
+    No *novo = (No *) malloc(sizeof(No));
+
+    
+    if (novo == NULL) {
+        printf("Erro ao alocar memoria.\n");
+        return;
+    }
+
+    novo->dado = valor;
+    novo->anterior = NULL;          
+    novo->proximo = lista->inicio;
+
+    if (lista->inicio != NULL)
+        lista->inicio->anterior = novo; 
+    else
+        lista->fim = novo;              
+
+    lista->inicio = novo;               
+}
+
+
+//COMPLEXIDADE: O(1), pois o ponteiro fim dá acesso direto ao último nó.
+void inserirFinal(Lista *lista, int valor) {
+    No *novo = (No *) malloc(sizeof(No));
+
+    if (novo == NULL) {
+        printf("Erro ao alocar memoria.\n");
+        return;
+    }
+
+    novo->dado = valor;
+    novo->proximo = NULL;            
+    novo->anterior = lista->fim;    
+
+    if (lista->fim != NULL)
+        lista->fim->proximo = novo; 
+    else
+        lista->inicio = novo;       
+
+    lista->fim = novo;              
+}
+
+
+//COMPLEXIDADE: O(n), pois pode percorrer a lista para contar e localizar a posição.
+void inserirPosicao(Lista *lista, int valor, int posicao) {
+    No *atual;
+    No *novo;
+    int i;
+
+    
+    if (posicao < 1 || posicao > contarElementos(lista) + 1) {
+        printf("Posicao invalida.\n");
+        return;
+    }
+
+    
+    if (posicao == 1) {
+        inserirInicio(lista, valor);
+        return;
+    }
+
+    
+    if (posicao == contarElementos(lista) + 1) {
+        inserirFinal(lista, valor);
+        return;
+    }
+
+    
+    atual = lista->inicio;
+
+    for (i = 1; i < posicao; i++)
+        atual = atual->proximo;
+
+    novo = (No *) malloc(sizeof(No));
+
+    if (novo == NULL) {
+        printf("Erro ao alocar memoria.\n");
+        return;
+    }
+
+    novo->dado = valor;
+    novo->anterior = atual->anterior; 
+    novo->proximo = atual;           
+
+    
+    atual->anterior->proximo = novo;
+    atual->anterior = novo;
+}
+
+
+//COMPLEXIDADE: O(1), pois o primeiro nó é acessado diretamente.
+void removerInicio(Lista *lista) {
+    No *aux;
+
+    if (lista->inicio == NULL) {
+        printf("A lista esta vazia.\n");
+        return;
+    }
+
+    aux = lista->inicio;         
+    lista->inicio = aux->proximo; 
+
+    if (lista->inicio != NULL)
+        lista->inicio->anterior = NULL; 
+    else
+        lista->fim = NULL;              
+
+    free(aux); 
+}
+
+
+//COMPLEXIDADE: O(1), pois o último nó é acessado diretamente.
+void removerFinal(Lista *lista) {
+    No *aux;
+
+    if (lista->fim == NULL) {
+        printf("A lista esta vazia.\n");
+        return;
+    }
+
+    aux = lista->fim;             
+    lista->fim = aux->anterior;   
+
+    if (lista->fim != NULL)
+        lista->fim->proximo = NULL; 
+    else
+        lista->inicio = NULL;       
+
+    free(aux); 
+}
+
+
+//COMPLEXIDADE: O(n), pois buscar() pode percorrer toda a lista.
+//Depois de localizar o nó, a atualização dos ponteiros é O(1).
+void removerValor(Lista *lista, int valor) {
+    No *aux = buscar(lista, valor);
+
+    if (aux == NULL) {
+        printf("Valor nao encontrado.\n");
+        return;
+    }
+
+    
+    if (aux == lista->inicio) {
+        removerInicio(lista);
+        return;
+    }
+
+    if (aux == lista->fim) {
+        removerFinal(lista);
+        return;
+    }
+
+    
+    aux->anterior->proximo = aux->proximo;
+    aux->proximo->anterior = aux->anterior;
+
+    free(aux); 
+}
+
+
+//COMPLEXIDADE: O(n) no pior caso, pois pode verificar todos os nós.
+No *buscar(Lista *lista, int valor) {
+    No *atual = lista->inicio;
+
+    while (atual != NULL) {
+        if (atual->dado == valor)
+            return atual; 
+
+        atual = atual->proximo; 
+    }
+
+    return NULL; 
+}
+
+
+//COMPLEXIDADE: O(n), pois visita todos os nós uma vez.
+void imprimirDireto(Lista *lista) {
+    No *atual = lista->inicio;
+
+    if (atual == NULL) {
+        printf("A lista esta vazia.\n");
+        return;
+    }
+
+    while (atual != NULL) {
+        printf("%d ", atual->dado);
+        atual = atual->proximo; 
+    }
+
+    printf("\n");
+}
+
+
+//COMPLEXIDADE: O(n), pois visita todos os nós uma vez.
+void imprimirInverso(Lista *lista) {
+    No *atual = lista->fim; 
+
+    if (atual == NULL) {
+        printf("A lista esta vazia.\n");
+        return;
+    }
+
+    while (atual != NULL) {
+        printf("%d ", atual->dado);
+        atual = atual->anterior; 
+    }
+
+    printf("\n");
+}
+
+
+//COMPLEXIDADE: O(n), pois precisa percorrer todos os nós.
+int contarElementos(Lista *lista) {
+    int quantidade = 0;
+    No *atual = lista->inicio;
+
+    while (atual != NULL) {
+        quantidade++;
+        atual = atual->proximo;
+    }
+
+    return quantidade;
+}
 
 int main() {
     Lista lista;
@@ -51,18 +290,16 @@ int main() {
 
         switch (opcao) {
             case 1:
-                 printf("Valor: ");
-                 scanf("%d", &valor);
-                 inserirInicio(&lista, valor);
-                 printf("\nElemento inserido no inicio!\n");
-                 break;
+                printf("Valor: ");
+                scanf("%d", &valor);
+                inserirInicio(&lista, valor);
+                break;
 
             case 2:
-                 printf("Valor: ");
-                 scanf("%d", &valor);
-                 inserirFinal(&lista, valor);
-                 printf("\nElemento inserido no final!\n");
-                 break;
+                printf("Valor: ");
+                scanf("%d", &valor);
+                inserirFinal(&lista, valor);
+                break;
 
             case 3:
                 printf("Valor: ");
@@ -123,224 +360,22 @@ int main() {
                 printf("Opcao invalida.\n");
         }
 
-    } while (opcao != 0);
+    } while (opcao != 0); 
 
-    liberarLista(&lista);
+    liberarLista(&lista); 
 
     return 0;
 }
 
-void inicializar(Lista *lista) {
-    lista->inicio = NULL;
-    lista->fim = NULL;
-}
-
-void inserirInicio(Lista *lista, int valor) {
-    No *novo = (No *) malloc(sizeof(No));
-
-    if (novo == NULL) {
-        printf("Erro ao alocar memoria.\n");
-        return;
-    }
-
-    novo->dado = valor;
-    novo->anterior = NULL;
-    novo->proximo = lista->inicio;
-
-    if (lista->inicio != NULL)
-        lista->inicio->anterior = novo;
-    else
-        lista->fim = novo;
-
-    lista->inicio = novo;
-}
-
-void inserirFinal(Lista *lista, int valor) {
-    No *novo = (No *) malloc(sizeof(No));
-
-    if (novo == NULL) {
-        printf("Erro ao alocar memoria.\n");
-        return;
-    }
-
-    novo->dado = valor;
-    novo->proximo = NULL;
-    novo->anterior = lista->fim;
-
-    if (lista->fim != NULL)
-        lista->fim->proximo = novo;
-    else
-        lista->inicio = novo;
-
-    lista->fim = novo;
-}
-
-void inserirPosicao(Lista *lista, int valor, int posicao) {
-    No *atual;
-    No *novo;
-    int i;
-
-    if (posicao < 1 || posicao > contarElementos(lista) + 1) {
-        printf("Posicao invalida.\n");
-        return;
-    }
-
-    if (posicao == 1) {
-        inserirInicio(lista, valor);
-        return;
-    }
-
-    if (posicao == contarElementos(lista) + 1) {
-        inserirFinal(lista, valor);
-        return;
-    }
-
-    atual = lista->inicio;
-
-    for (i = 1; i < posicao; i++)
-        atual = atual->proximo;
-
-    novo = (No *) malloc(sizeof(No));
-
-    if (novo == NULL) {
-        printf("Erro ao alocar memoria.\n");
-        return;
-    }
-
-    novo->dado = valor;
-    novo->anterior = atual->anterior;
-    novo->proximo = atual;
-
-    atual->anterior->proximo = novo;
-    atual->anterior = novo;
-}
-
-void removerInicio(Lista *lista) {
-    No *aux;
-
-    if (lista->inicio == NULL) {
-        printf("A lista esta vazia.\n");
-        return;
-    }
-
-    aux = lista->inicio;
-    lista->inicio = aux->proximo;
-
-    if (lista->inicio != NULL)
-        lista->inicio->anterior = NULL;
-    else
-        lista->fim = NULL;
-
-    free(aux);
-}
-
-void removerFinal(Lista *lista) {
-    No *aux;
-
-    if (lista->fim == NULL) {
-        printf("A lista esta vazia.\n");
-        return;
-    }
-
-    aux = lista->fim;
-    lista->fim = aux->anterior;
-
-    if (lista->fim != NULL)
-        lista->fim->proximo = NULL;
-    else
-        lista->inicio = NULL;
-
-    free(aux);
-}
-
-No *buscar(Lista *lista, int valor) {
-    No *atual = lista->inicio;
-
-    while (atual != NULL) {
-        if (atual->dado == valor)
-            return atual;
-
-        atual = atual->proximo;
-    }
-
-    return NULL;
-}
-
-void removerValor(Lista *lista, int valor) {
-    No *aux = buscar(lista, valor);
-
-    if (aux == NULL) {
-        printf("Valor nao encontrado.\n");
-        return;
-    }
-
-    if (aux == lista->inicio) {
-        removerInicio(lista);
-        return;
-    }
-
-    if (aux == lista->fim) {
-        removerFinal(lista);
-        return;
-    }
-
-    aux->anterior->proximo = aux->proximo;
-    aux->proximo->anterior = aux->anterior;
-    free(aux);
-}
-
-void imprimirDireto(Lista *lista) {
-    No *atual = lista->inicio;
-
-    if (atual == NULL) {
-        printf("A lista esta vazia.\n");
-        return;
-    }
-
-    while (atual != NULL) {
-        printf("%d ", atual->dado);
-        atual = atual->proximo;
-    }
-
-    printf("\n");
-}
-
-void imprimirInverso(Lista *lista) {
-    No *atual = lista->fim;
-
-    if (atual == NULL) {
-        printf("A lista esta vazia.\n");
-        return;
-    }
-
-    while (atual != NULL) {
-        printf("%d ", atual->dado);
-        atual = atual->anterior;
-    }
-
-    printf("\n");
-}
-
-int contarElementos(Lista *lista) {
-    int quantidade = 0;
-    No *atual = lista->inicio;
-
-    while (atual != NULL) {
-        quantidade++;
-        atual = atual->proximo;
-    }
-
-    return quantidade;
-}
-
+// COMPLEXIDADE: O(n), pois percorre e libera cada nó uma vez.
 void liberarLista(Lista *lista) {
     No *atual = lista->inicio;
     No *aux;
 
     while (atual != NULL) {
-        aux = atual;
-        atual = atual->proximo;
-        free(aux);
+        aux = atual;              
+        atual = atual->proximo;   
+        free(aux);                
     }
 
     lista->inicio = NULL;
